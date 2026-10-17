@@ -1,0 +1,66 @@
+name: mt论坛自动签到
+
+on:
+  schedule:
+    # GitHub 定时任务经常有 3~6 小时延迟甚至整天跳过, 因此放宽覆盖范围并每小时触发一次,
+    # 由下方"校验中国时间窗口"步骤保证只有中国时间 00:01~06:00 内的运行才真正签到,
+    # 脚本自身记录当天已签, 因此多次运行也只会签到一次。
+    - cron: '7 12-21 * * *'
+  workflow_dispatch:
+
+jobs:
+  checkin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    permissions:
+      contents: write
+
+    steps:
+    - name: 检出仓库
+      uses: actions/checkout@v4
+
+    - name: 设置Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: 校验中国时间窗口
+      id: window
+      if: github.event_name == 'schedule'
+      run: |
+        h=$((10#$(TZ=Asia/Shanghai date +%H)))
+        m=$((10#$(TZ=Asia/Shanghai date +%M)))
+        mins=$((h * 60 + m))
+        now=$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M')
+        if [ "$mins" -lt 1 ] || [ "$mins" -gt 360 ]; then
+          echo "当前中国时间 $now 不在 00:01~06:00 窗口, 跳过本次运行"
+          echo "skip=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "当前中国时间 $now 在 00:01~06:00 窗口内"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: 窗口内随机延迟
+      if: github.event_name == 'schedule' && steps.window.outputs.skip == 'false'
+      run: |
+        # 在中国时间 00:01~06:00 内随机选取一个时刻签到, 使签到时间随机分布
+        now=$(TZ=Asia/Shanghai date +%s)
+        six=$(TZ=Asia/Shanghai date -d 'today 06:00' +%s)
+        remain=$((six - now))
+        if [ "$remain" -lt 0 ]; then remain=0; fi
+        # 上限 5 小时, 避免触及 GitHub job 6 小时上限
+        if [ "$remain" -gt 18000 ]; then remain=18000; fi
+        delay=$((RANDOM % (remain + 1)))
+        echo "随机延迟 $((delay / 60)) 分 $((delay % 60)) 秒后开始签到"
+        sleep $delay
+
+    - name: 运行签到
+      if: github.event_name != 'schedule' || steps.window.outputs.skip == 'false'
+      env:
+        ACCOUNTS: ${{ secrets.ACCOUNTS }}
+      run: python main.py

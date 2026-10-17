@@ -1,0 +1,78 @@
+## MT论坛自动签到脚本
+这是一个用于自动签到MT论坛的脚本，配合 GitHub Actions 实现自动定时执行。  
+详细教程可以去哔哩哔哩搜索
+
+
+###### **最后更新日期：2026年10月11日 09点16分**
+
+## 功能
+- 🔐 自动签到(单账户或多账户)
+- 👥 支持多账户批量处理
+- ⏰ 每天自动执行签到
+
+## 使用方法
+1. fork 或者上传此项目
+2. 在Actions菜单允许 `I understand my workflows, go ahead and enable them` 按钮
+3. 在 GitHub 仓库的 Settings → Secrets and variables → Actions 中添加以下环境变量
+   - 添加账号: 变量名`ACCOUNTS` 
+
+     **单账号格式:**
+     ```
+     user:pass
+     ```
+     **多账号格式:**
+     ```
+     user1:pass1
+     user2:pass2
+     user3:pass3
+     ```
+4. 在 GitHub 仓库的 Settings → Actions → General 设置允许推送权限
+5. GitHub Actions 初始手动执行检查是否有配置错误，脚本会自动每天执行,可手动执行
+
+<p align="center">可以按照下面教程设置</p>
+
+
+## 操作教程
+### 设置变量
+>1. 步骤一
+>   ![步骤一](./src/1.jpg)
+>2. 步骤二
+>   ![步骤二](./src/1_2.jpg)
+>3. 步骤三
+>   ![步骤三](./src/1_3.jpg)
+>4. 步骤四
+>   ![步骤四](./src/1_4.jpg)
+
+### 设置权限
+>1. 步骤一
+>   ![步骤一](./src/1.jpg)
+>2. 步骤二
+>   ![步骤二](./src/2_2.jpg)
+>3. 步骤三
+>   ![步骤三](./src/2_3.jpg)
+>4. 步骤四
+>   ![步骤四](./src/2_4.jpg)
+
+### 运行测试
+>1. 步骤一
+>   ![步骤一](./src/3_1.jpg)
+>2. 步骤二
+>   ![步骤二](./src/3_2.jpg)
+>3. 步骤三
+>   ![步骤三](./src/3_3.jpg)
+>4. 步骤四
+>   ![步骤四](./src/3_4.jpg)
+>5. 步骤五
+>   ![步骤五](./src/3_5.jpg)
+
+## 注意事项
+1. 确保账户密码正确
+2. 首次运行 GitHub Actions 需要授权
+3. 脚本执行时间为 UTC 0:00（香港时间 8:00）
+
+## 📈 历史Star数
+
+[![Star History Chart](https://api.star-history.com/svg?repos=klaas8/MT&type=date&legend=top-left)](https://www.star-history.com/#klaas8/mt&type=date&legend=top-left)
+
+## 许可证
+GPL 3.0

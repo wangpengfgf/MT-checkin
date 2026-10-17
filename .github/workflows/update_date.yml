@@ -1,0 +1,39 @@
+name: 保存最后更新时间
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '*.sqlite'
+      - 'src/ips.txt'
+      - 'src/verify.txt'
+
+jobs:
+  update-date:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: 更改最后更新时间
+        run: |
+          CURRENT_DATE=$(date -u +"%Y年%m月%d日 %H点%M分" --date='8 hours')
+          sed -i "s/###### \*\*最后更新日期.*\*\*/###### \*\*最后更新日期：$CURRENT_DATE\*\*/" README.md >/dev/null 2>&1
+
+      - name: 提交
+        run: |
+          git config --local user.name "github-actions" >/dev/null 2>&1
+          git config --local user.email "github-actions@github.com" >/dev/null 2>&1
+          git add README.md >/dev/null 2>&1
+          if ! git diff --cached --quiet; then
+            git commit -m "自动更新最后更新日期" >/dev/null 2>&1
+            git pull --quiet origin main >/dev/null 2>&1
+            git push --quiet origin main >/dev/null 2>&1
+            echo "更新成功"
+          else
+            echo "无更改可提交"
+          fi
