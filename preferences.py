@@ -1,4 +1,4 @@
-import os, random, atexit, pytz, base64
+import os, random, atexit, pytz, base64, time
 from pathlib import Path
 from sqlitedict import SqliteDict
 from datetime import datetime
@@ -118,11 +118,17 @@ class Preferences:
         try:
             os.system('git config --local user.name "github-actions[bot]" >/dev/null 2>&1')
             os.system('git config --local user.email "github-actions[bot]@users.noreply.github.com" >/dev/null 2>&1')
-            if os.system(f'git add {db_path} >/dev/null 2>&1') == 0:
-                os.system('git commit -m "更新" >/dev/null 2>&1')
-                os.system('git pull --quiet --rebase')
-                os.system('git push --quiet --force-with-lease')
-                logger.info("数据库已更新")
+            if os.system(f'git add {db_path} >/dev/null 2>&1') != 0:
+                return
+            os.system('git commit -m "更新" >/dev/null 2>&1')
+            # 推送可能和 verify/update_date 工作流撞车, 失败时重试, 避免当天签到记录丢失
+            for _ in range(3):
+                os.system('git pull --quiet --rebase >/dev/null 2>&1')
+                if os.system('git push --quiet >/dev/null 2>&1') == 0:
+                    logger.info("数据库已更新")
+                    return
+                time.sleep(2)
+            logger.warning("数据库推送失败")
         except:
             pass
 

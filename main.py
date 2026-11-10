@@ -122,7 +122,22 @@ def load():
         logger.info(f"{index}: {proxy} - {req_time}ms")
         IP_LIST[proxy] = True
 
+SIGN_PAGE = 'https://bbs.binmt.cc/k_misign-sign.html'
+# 签到插件(k_misign)真实返回: 成功为"签到成功"/"获得", 当天已签为"今日已签"/"重复签到"
+SIGN_OK_KEYWORDS = ('签到成功', '获得')
+SIGN_DONE_KEYWORDS = ('已签', '重复签到')
+SIGN_AUTH_KEYWORDS = ('请先登录', '未登录', '需要先登录', '请登录')
+
+def message_of(text):
+    msg = CDATA(text)
+    if not msg:
+        msg = re.sub(r'<[^>]+>', ' ', text)
+        msg = re.sub(r'\s+', ' ', msg).strip()
+    return msg[:200]
+
 def checkIn(user, pwd, ip):
+    """返回 True 表示本次运行不必再换代理重试(签到成功/今日已签/密码错误等确定性结果)"""
+    name = format_username(user)
     req = requests.session()
     req.headers.update(headers)
     proxies = {
@@ -130,45 +145,73 @@ def checkIn(user, pwd, ip):
         'https': f'http://{ip}'
     }
     req.proxies = proxies
-    logger.info(f"{format_username(user)} 开始签到")
+    logger.info(f"{name} 开始签到")
     try:
         url = 'https://bbs.binmt.cc/member.php?mod=logging&action=login&infloat=yes&handlekey=login&inajax=1&ajaxtarget=fwin_content_login'
         resp = get(req, url, proxies)
-        if resp.ok:
-            content = resp.text
-            _loginhash = loginhash(content)
-            _formhash = formhash(content)
-            url = f'https://bbs.binmt.cc/member.php?mod=logging&action=login&loginsubmit=yes&handlekey=login&loginhash={_loginhash}&inajax=1'
-            data = {
-                'formhash': _formhash,
-                'referer': 'https://bbs.binmt.cc/k_misign-sign.html',
-                'fastloginfield': 'username',
-                'username': user,
-                'password': pwd,
-                'questionid': '0',
-                'answer': '',
-                'agreebbrule': ''
-            }
-            resp = post(req, url, data, proxies)
-            if resp.ok:
-                if '失败' in resp.text:
-                    del accounts_list[user]
-                    logger.warning("密码错误")
-                    return
-                url = 'https://bbs.binmt.cc/k_misign-sign.html'
-                resp = get(req, url, proxies)
-                _formhash = formhash(resp.text)
-                if resp.ok:
-                    url = f'https://bbs.binmt.cc/plugin.php?id=k_misign:sign&operation=qiandao&format=text&formhash={_formhash}'
-                    resp = get(req, url, proxies)
-                    if '已签' in resp.text:
-                        del accounts_list[user]
-                        logger.info(CDATA(resp.text))
-                        prefs.put(user, prefs.getTime())
-                        return True
-                    logger.warning(CDATA(resp.text))
+        if not resp.ok:
+            return False
+        content = resp.text
+        _loginhash = loginhash(content)
+        _formhash = formhash(content)
+        url = f'https://bbs.binmt.cc/member.php?mod=logging&action=login&loginsubmit=yes&handlekey=login&loginhash={_loginhash}&inajax=1'
+        data = {
+            'formhash': _formhash,
+            'referer': SIGN_PAGE,
+            'fastloginfield': 'username',
+            'username': user,
+            'password': pwd,
+            'questionid': '0',
+            'answer': '',
+            'agreebbrule': ''
+        }
+        resp = post(req, url, data, proxies)
+        if not resp.ok:
+            return False
+        if '失败' in resp.text and '欢迎您回来' not in resp.text:
+            accounts_list.pop(user, None)
+            logger.warning(f"{name} 登录失败(账号或密码错误)")
+            return True
+        # 签到页的 formhash 同时可用于确认登录状态已生效
+        resp = get(req, SIGN_PAGE, proxies)
+        if not resp.ok:
+            return False
+        _formhash = formhash(resp.text)
+        if not _formhash:
+            logger.warning(f"{name} 未获取到签到 formhash, 登录状态可能已失效")
+            return False
+        url = f'https://bbs.binmt.cc/plugin.php?id=k_misign:sign&operation=qiandao&format=text&formhash={_formhash}'
+        resp = get(req, url, proxies)
+        if not resp.ok:
+            return False
+        text = resp.text or ''
+        msg = message_of(text)
+        # 人机验证页/错误页等 HTML 也可能带"已签"字样, 不能当作签到结果
+        head = text.lstrip()[:300].lower()
+        if head.startswith('<!doctype') or '<html' in head:
+            logger.warning(f"{name} 签到返回异常页面, 稍后重试: {msg}")
+            return False
+        if any(k in text for k in SIGN_AUTH_KEYWORDS):
+            logger.warning(f"{name} 登录状态失效, 稍后重试: {msg}")
+            return False
+        if any(k in text for k in SIGN_OK_KEYWORDS):
+            prefs.put(user, prefs.getTime())
+            logger.info(f"{name} 签到成功: {msg}")
+            return True
+        if any(k in text for k in SIGN_DONE_KEYWORDS):
+            # 只有本脚本今天确实签到成功过, "已签"才能当作今天已完成;
+            # 否则可能是上次签到未满签到间隔(论坛未过零点)/手动签到,
+            # 直接落库会导致当天后续运行全部跳过, 出现"显示已签但实际没签"
+            if prefs.get(user, "") == prefs.getTime():
+                logger.info(f"{name} 今日已签到: {msg}")
+                return True
+            # 论坛已签但今天不是本脚本签的: 不落库(否则当天后续运行全跳过),
+            # 换代理也没用, 等下一次定时运行再试
+            logger.warning(f"{name} 论坛提示已签到但今日无成功记录, 等待下次运行重试: {msg}")
+            return True
+        logger.warning(f"{name} 签到失败, 稍后重试: {msg or '无返回内容'}")
     except Exception as e:
-        logger.warning(f"异常: {str(e)}")
+        logger.warning(f"{name} 异常: {str(e)}")
         IP_LIST[ip] = False
     return False
 
@@ -215,12 +258,16 @@ def start():
         keys = list(accounts_list.keys())
         total = len(keys)
         for i, username in enumerate(keys):
-            for proxy, status in IP_LIST.items():
+            password = accounts_list.get(username)
+            if not password:
+                continue
+            for proxy, status in list(IP_LIST.items()):
                 if not status: continue
                 try:
-                    if checkIn(username, accounts_list[username], proxy): break
-                except:
-                    pass
+                    if checkIn(username, password, proxy): break
+                except Exception as e:
+                    logger.warning(f"{format_username(username)} 异常: {str(e)}")
+                    IP_LIST[proxy] = False
             if i < total - 1:
                 time.sleep(3)
 start()
