@@ -1,66 +1,70 @@
 [
     {
-        "merged": "com.bore.tunnel.app-debug-4:/drawable_bg_segment_selected.xml.flat",
-        "source": "com.bore.tunnel.app-main-6:/drawable/bg_segment_selected.xml"
+        "merged": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-debug-4:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-main-6:/mipmap-anydpi-v26/ic_launcher_round.xml"
     },
     {
         "merged": "com.bore.tunnel.app-debug-4:/layout_activity_main.xml.flat",
         "source": "com.bore.tunnel.app-main-6:/layout/activity_main.xml"
     },
     {
-        "merged": "com.bore.tunnel.app-debug-4:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
-        "source": "com.bore.tunnel.app-main-6:/mipmap-anydpi-v26/ic_launcher_round.xml"
+        "merged": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-debug-4:/drawable_bg_button_primary.xml.flat",
+        "source": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-main-6:/drawable/bg_button_primary.xml"
     },
     {
-        "merged": "com.bore.tunnel.app-debug-4:/drawable_bg_button_primary.xml.flat",
-        "source": "com.bore.tunnel.app-main-6:/drawable/bg_button_primary.xml"
+        "merged": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-debug-4:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-main-6:/drawable/ic_launcher_foreground.xml"
     },
     {
-        "merged": "com.bore.tunnel.app-debug-4:/drawable_bg_card.xml.flat",
-        "source": "com.bore.tunnel.app-main-6:/drawable/bg_card.xml"
+        "merged": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-debug-4:/drawable_bg_card_accent.xml.flat",
+        "source": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-main-6:/drawable/bg_card_accent.xml"
     },
     {
-        "merged": "com.bore.tunnel.app-debug-4:/drawable_bg_logo.xml.flat",
-        "source": "com.bore.tunnel.app-main-6:/drawable/bg_logo.xml"
+        "merged": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-debug-4:/drawable_bg_button_danger.xml.flat",
+        "source": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-main-6:/drawable/bg_button_danger.xml"
     },
     {
-        "merged": "com.bore.tunnel.app-debug-4:/mipmap-anydpi-v26_ic_launcher.xml.flat",
-        "source": "com.bore.tunnel.app-main-6:/mipmap-anydpi-v26/ic_launcher.xml"
+        "merged": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-debug-4:/drawable_bg_input.xml.flat",
+        "source": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-main-6:/drawable/bg_input.xml"
     },
     {
-        "merged": "com.bore.tunnel.app-debug-4:/drawable_bg_card_accent.xml.flat",
-        "source": "com.bore.tunnel.app-main-6:/drawable/bg_card_accent.xml"
+        "merged": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-debug-4:/drawable_ic_dot.xml.flat",
+        "source": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-main-6:/drawable/ic_dot.xml"
     },
     {
-        "merged": "com.bore.tunnel.app-debug-4:/drawable_ic_dot.xml.flat",
-        "source": "com.bore.tunnel.app-main-6:/drawable/ic_dot.xml"
+        "merged": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-debug-4:/drawable_bg_logo.xml.flat",
+        "source": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-main-6:/drawable/bg_logo.xml"
     },
     {
-        "merged": "com.bore.tunnel.app-debug-4:/drawable_bg_log.xml.flat",
-        "source": "com.bore.tunnel.app-main-6:/drawable/bg_log.xml"
+        "merged": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-debug-4:/layout_activity_main.xml.flat",
+        "source": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-main-6:/layout/activity_main.xml"
     },
     {
-        "merged": "com.bore.tunnel.app-debug-4:/drawable_bg_segment.xml.flat",
-        "source": "com.bore.tunnel.app-main-6:/drawable/bg_segment.xml"
+        "merged": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-debug-4:/drawable_ic_notification.xml.flat",
+        "source": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-main-6:/drawable/ic_notification.xml"
     },
     {
-        "merged": "com.bore.tunnel.app-debug-4:/drawable_ic_notification.xml.flat",
-        "source": "com.bore.tunnel.app-main-6:/drawable/ic_notification.xml"
+        "merged": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-debug-4:/drawable_bg_button_ghost.xml.flat",
+        "source": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-main-6:/drawable/bg_button_ghost.xml"
     },
     {
-        "merged": "com.bore.tunnel.app-debug-4:/drawable_bg_input.xml.flat",
-        "source": "com.bore.tunnel.app-main-6:/drawable/bg_input.xml"
+        "merged": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-debug-4:/drawable_bg_log.xml.flat",
+        "source": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-main-6:/drawable/bg_log.xml"
     },
     {
-        "merged": "com.bore.tunnel.app-debug-4:/drawable_ic_launcher_foreground.xml.flat",
-        "source": "com.bore.tunnel.app-main-6:/drawable/ic_launcher_foreground.xml"
+        "merged": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-debug-4:/drawable_bg_card.xml.flat",
+        "source": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-main-6:/drawable/bg_card.xml"
     },
     {
-        "merged": "com.bore.tunnel.app-debug-4:/drawable_bg_button_danger.xml.flat",
-        "source": "com.bore.tunnel.app-main-6:/drawable/bg_button_danger.xml"
+        "merged": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-debug-4:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-main-6:/mipmap-anydpi-v26/ic_launcher.xml"
     },
     {
-        "merged": "com.bore.tunnel.app-debug-4:/drawable_bg_button_ghost.xml.flat",
-        "source": "com.bore.tunnel.app-main-6:/drawable/bg_button_ghost.xml"
+        "merged": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-debug-4:/drawable_bg_segment.xml.flat",
+        "source": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-main-6:/drawable/bg_segment.xml"
+    },
+    {
+        "merged": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-debug-4:/drawable_bg_segment_selected.xml.flat",
+        "source": "/root/.gradle/daemon/8.14.6/com.bore.tunnel.app-main-6:/drawable/bg_segment_selected.xml"
     }
 ]

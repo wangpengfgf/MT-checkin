@@ -3,7 +3,6 @@ package com.bore.tunnel
 import android.app.Service
 import android.content.Intent
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -19,15 +18,24 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.min
 
 /**
- * 可拖动悬浮窗：收起时是一条状态胶囊，展开后显示状态、日志尾部与启停按钮。
- * 依附于前台服务，可在任意界面操作，避免切回应用才能保活/重连。
+ * 可拖动悬浮窗：收起时显示通道在线数，展开后展示每个通道的状态与日志尾部，
+ * 支持全部启停或点击单个通道启停。
  */
 class OverlayController(private val service: Service) {
+
+    private data class RowRef(
+        val dot: View,
+        val name: TextView,
+        val detail: TextView,
+        val badge: TextView
+    )
 
     private val wm = service.getSystemService(WindowManager::class.java)
     private val main = Handler(Looper.getMainLooper())
@@ -43,11 +51,13 @@ class OverlayController(private val service: Service) {
     private var cardStatus: TextView? = null
     private var cardDetail: TextView? = null
     private var cardLog: TextView? = null
-    private var btnStart: TextView? = null
-    private var btnStop: TextView? = null
-    private var btnCollapse: TextView? = null
+    private var channelContainer: LinearLayout? = null
+    private var channelScroll: ScrollView? = null
+    private var btnStartAll: TextView? = null
+    private var btnStopAll: TextView? = null
 
-    private var expanded = false
+    private val rows = LinkedHashMap<String, RowRef>()
+    private var rowsSignature = ""
     private var shown = false
     private var lastState = TunnelStore.state
     private var lastLogs: List<String> = emptyList()
@@ -61,12 +71,10 @@ class OverlayController(private val service: Service) {
     private val ticker = object : Runnable {
         override fun run() {
             if (!shown) return
-            renderUptime()
+            render()
             main.postDelayed(this, 1000L)
         }
     }
-
-    fun isShown(): Boolean = shown
 
     fun show() {
         if (shown) return
@@ -101,7 +109,10 @@ class OverlayController(private val service: Service) {
         params = null
         pill = null
         card = null
-        expanded = false
+        channelContainer = null
+        channelScroll = null
+        rows.clear()
+        rowsSignature = ""
     }
 
     // ------------------------------------------------------------------- view
@@ -130,7 +141,7 @@ class OverlayController(private val service: Service) {
         card = buildCard()
         card?.visibility = View.GONE
         container.addView(pill)
-        val cardWidth = (286 * metrics.density).toInt()
+        val cardWidth = (300 * metrics.density).toInt()
             .coerceAtMost(metrics.widthPixels - dp(16))
         container.addView(
             card,
@@ -154,10 +165,7 @@ class OverlayController(private val service: Service) {
             setBackgroundResource(R.drawable.ic_dot)
             backgroundTintList = ColorStateList.valueOf(service.getColor(R.color.text_muted))
         }
-        pillView.addView(
-            dot,
-            LinearLayout.LayoutParams(dp(8), dp(8))
-        )
+        pillView.addView(dot, LinearLayout.LayoutParams(dp(8), dp(8)))
         val label = TextView(service).apply {
             text = "BORE · 未连接"
             setTextColor(service.getColor(R.color.text_primary))
@@ -189,7 +197,6 @@ class OverlayController(private val service: Service) {
             setPadding(dp(14), dp(12), dp(14), dp(12))
         }
 
-        // 头部（可拖动）
         val header = LinearLayout(service).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -202,26 +209,23 @@ class OverlayController(private val service: Service) {
             letterSpacing = 0.12f
         }
         header.addView(title, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-        btnCollapse = TextView(service).apply {
+        header.addView(TextView(service).apply {
             text = "收起"
             setTextColor(service.getColor(R.color.text_muted))
             textSize = 11f
             setPadding(dp(8), dp(2), dp(8), dp(2))
             setOnClickListener { collapse() }
-        }
-        header.addView(btnCollapse)
-        val close = TextView(service).apply {
+        })
+        header.addView(TextView(service).apply {
             text = "×"
             setTextColor(service.getColor(R.color.text_muted))
             textSize = 17f
             setPadding(dp(8), 0, dp(2), dp(2))
             setOnClickListener { hideFromUser() }
-        }
-        header.addView(close)
+        })
         attachDrag(header) { collapse() }
         cardView.addView(header)
 
-        // 状态行
         val statusRow = LinearLayout(service).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -254,7 +258,6 @@ class OverlayController(private val service: Service) {
         )
 
         val detail = TextView(service).apply {
-            text = ""
             setTextColor(service.getColor(R.color.text_secondary))
             textSize = 10f
             maxLines = 1
@@ -265,7 +268,22 @@ class OverlayController(private val service: Service) {
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = dp(4) }
+            ).apply { topMargin = dp(3) }
+        )
+
+        // 通道列表
+        val scroll = ScrollView(service).apply {
+            isVerticalScrollBarEnabled = false
+            isVerticalScrollBarEnabled = false
+        }
+        val list = LinearLayout(service).apply { orientation = LinearLayout.VERTICAL }
+        scroll.addView(list)
+        cardView.addView(
+            scroll,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = dp(8) }
         )
 
         val logView = TextView(service).apply {
@@ -274,7 +292,7 @@ class OverlayController(private val service: Service) {
             textSize = 9f
             typeface = Typeface.MONOSPACE
             setLineSpacing(dp(2).toFloat(), 1f)
-            maxLines = 8
+            maxLines = 6
             ellipsize = TextUtils.TruncateAt.START
             background = rounded(0xFF070B0F.toInt(), 10f, 0xFF1B2530.toInt())
             setPadding(dp(8), dp(6), dp(8), dp(6))
@@ -287,36 +305,36 @@ class OverlayController(private val service: Service) {
             ).apply { topMargin = dp(8) }
         )
 
-        // 操作按钮
-        val actions = LinearLayout(service).apply {
-            orientation = LinearLayout.HORIZONTAL
+        val actions = LinearLayout(service).apply { orientation = LinearLayout.HORIZONTAL }
+        btnStartAll = actionButton("全部启动", 0xFF22D3EE.toInt(), 0xFF041218.toInt()) {
+            TunnelService.startAllSaved(service)
         }
-        btnStart = actionButton("启动", 0xFF22D3EE.toInt(), 0xFF041218.toInt()) {
-            TunnelService.startSaved(service)
-        }
-        btnStop = actionButton("停止", 0xFF2A1216.toInt(), 0xFFF87171.toInt()) {
-            TunnelService.stop(service)
+        btnStopAll = actionButton("全部停止", 0xFF2A1216.toInt(), 0xFFF87171.toInt()) {
+            TunnelService.stopAll(service)
         }
         val btnOpen = actionButton("打开", 0xFF101821.toInt(), 0xFFA7B6C2.toInt()) {
-            val intent = Intent(service, MainActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            service.startActivity(intent)
+            service.startActivity(
+                Intent(service, MainActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            )
         }
-        actions.addView(btnStart, LinearLayout.LayoutParams(0, dp(36), 1f))
-        actions.addView(btnStop, LinearLayout.LayoutParams(0, dp(36), 1f).apply { marginStart = dp(6) })
+        actions.addView(btnStartAll, LinearLayout.LayoutParams(0, dp(36), 1f))
+        actions.addView(btnStopAll, LinearLayout.LayoutParams(0, dp(36), 1f).apply { marginStart = dp(6) })
         actions.addView(btnOpen, LinearLayout.LayoutParams(0, dp(36), 1f).apply { marginStart = dp(6) })
         cardView.addView(
             actions,
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = dp(10) }
+            ).apply { topMargin = dp(8) }
         )
 
         cardDot = dot
         cardStatus = status
         cardDetail = detail
         cardLog = logView
+        channelContainer = list
+        channelScroll = scroll
         return cardView
     }
 
@@ -339,14 +357,12 @@ class OverlayController(private val service: Service) {
     // --------------------------------------------------------------- behavior
 
     private fun expand() {
-        expanded = true
         pill?.visibility = View.GONE
         card?.visibility = View.VISIBLE
         clampToScreen()
     }
 
     private fun collapse() {
-        expanded = false
         card?.visibility = View.GONE
         pill?.visibility = View.VISIBLE
         clampToScreen()
@@ -421,62 +437,189 @@ class OverlayController(private val service: Service) {
 
     private fun render() {
         val state = lastState
-        val active = state.running || state.connecting
+        val total = state.channels.size
+        val running = state.runningCount
+        val connecting = state.connectingCount
+
         val color = when {
-            state.running -> service.getColor(R.color.ok)
-            state.connecting -> service.getColor(R.color.warn)
+            running > 0 -> service.getColor(R.color.ok)
+            connecting > 0 -> service.getColor(R.color.warn)
+            state.errorCount > 0 -> service.getColor(R.color.error)
             else -> service.getColor(R.color.text_muted)
         }
-
         pillDot?.backgroundTintList = ColorStateList.valueOf(color)
         cardDot?.backgroundTintList = ColorStateList.valueOf(color)
 
         pillLabel?.text = when {
-            state.running -> "BORE · 已连接"
-            state.connecting -> "BORE · 连接中"
+            running > 0 -> "BORE · $running/$total 在线"
+            connecting > 0 -> "BORE · 连接中"
             else -> "BORE · 未连接"
         }
 
-        val statusText = when {
-            state.tunnelUrl.isNotBlank() -> "隧道已建立"
-            state.running -> "隧道运行中"
-            state.connecting -> state.message
-            else -> state.message
+        cardStatus?.text = when {
+            running > 0 -> "在线 $running/$total" +
+                if (connecting > 0) " · $connecting 连接中" else ""
+            connecting > 0 -> "$connecting 个通道连接中"
+            total == 0 -> "暂无通道"
+            else -> "全部未连接"
         }
-        cardStatus?.text = if (state.running) "$statusText · ${uptime(state)}" else statusText
+        cardDetail?.text = if (state.channels.any { it.url.isNotBlank() }) {
+            state.channels.firstNotNullOfOrNull { it.url.ifBlank { null } } ?: ""
+        } else {
+            "点击通道可单独启停"
+        }
 
-        cardDetail?.text = when {
-            state.tunnelUrl.isNotBlank() -> state.tunnelUrl
-            state.attempts > 0 -> "第 ${state.attempts} 次重连 · ${state.configSummary}"
-            else -> state.configSummary
-        }
+        renderChannels(state)
 
         cardLog?.text = if (lastLogs.isEmpty()) {
             "等待启动…"
         } else {
-            lastLogs.takeLast(8).joinToString("\n")
+            lastLogs.takeLast(6).joinToString("\n")
         }
 
-        btnStart?.apply {
-            alpha = if (active) 0.4f else 1f
-            isEnabled = !active
+        btnStartAll?.alpha = if (total > 0) 1f else 0.4f
+        btnStartAll?.isEnabled = total > 0
+        btnStopAll?.alpha = if (state.activeCount > 0) 1f else 0.4f
+        btnStopAll?.isEnabled = state.activeCount > 0
+    }
+
+    private fun renderChannels(state: TunnelUiState) {
+        val signature = state.channels.joinToString("|") { it.id + it.name }
+        if (signature != rowsSignature) {
+            rowsSignature = signature
+            rebuildRows(state)
         }
-        btnStop?.apply {
-            alpha = if (active) 1f else 0.4f
-            isEnabled = active
+        state.channels.forEach { channel ->
+            val row = rows[channel.id] ?: return@forEach
+            val color = when (channel.status) {
+                ChannelStatus.RUNNING -> service.getColor(R.color.ok)
+                ChannelStatus.CONNECTING -> service.getColor(R.color.warn)
+                ChannelStatus.ERROR -> service.getColor(R.color.error)
+                ChannelStatus.IDLE -> service.getColor(R.color.text_muted)
+            }
+            row.dot.backgroundTintList = ColorStateList.valueOf(color)
+            row.name.text = channel.name
+            row.detail.text = when {
+                channel.url.isNotBlank() -> channel.url
+                channel.status == ChannelStatus.RUNNING -> "运行中 · ${uptime(channel)}"
+                else -> channel.message
+            }
+            row.badge.text = when (channel.status) {
+                ChannelStatus.RUNNING -> "停止"
+                ChannelStatus.CONNECTING -> "取消"
+                ChannelStatus.ERROR -> "重试"
+                ChannelStatus.IDLE -> "启动"
+            }
+            row.badge.setTextColor(color)
+        }
+        val rowHeight = dp(38)
+        channelScroll?.layoutParams?.let { lp ->
+            lp.height = min(max(state.channels.size, 1), 4) * rowHeight
+            channelScroll?.layoutParams = lp
         }
     }
 
-    private fun renderUptime() {
-        val state = lastState
-        if (state.running) {
-            cardStatus?.text = "隧道运行中 · ${uptime(state)}"
+    private fun rebuildRows(state: TunnelUiState) {
+        val list = channelContainer ?: return
+        list.removeAllViews()
+        rows.clear()
+
+        if (state.channels.isEmpty()) {
+            list.addView(TextView(service).apply {
+                text = "暂无通道，打开应用添加"
+                setTextColor(service.getColor(R.color.text_muted))
+                textSize = 10f
+                setPadding(0, dp(8), 0, dp(8))
+            })
+            return
+        }
+
+        state.channels.forEachIndexed { index, channel ->
+            if (index > 0) {
+                list.addView(View(service).apply {
+                    setBackgroundColor(0x1AFFFFFF)
+                }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1).apply {
+                    topMargin = dp(2)
+                    bottomMargin = dp(2)
+                })
+            }
+
+            val row = LinearLayout(service).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(0, dp(5), 0, dp(5))
+                isClickable = true
+                setOnClickListener { toggleChannel(channel) }
+            }
+            val dot = View(service).apply {
+                setBackgroundResource(R.drawable.ic_dot)
+                backgroundTintList = ColorStateList.valueOf(service.getColor(R.color.text_muted))
+            }
+            row.addView(dot, LinearLayout.LayoutParams(dp(6), dp(6)))
+
+            val texts = LinearLayout(service).apply { orientation = LinearLayout.VERTICAL }
+            val name = TextView(service).apply {
+                text = channel.name
+                setTextColor(service.getColor(R.color.text_primary))
+                textSize = 11f
+                typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+                maxLines = 1
+                ellipsize = TextUtils.TruncateAt.END
+            }
+            val detail = TextView(service).apply {
+                text = channel.summary
+                setTextColor(service.getColor(R.color.text_muted))
+                textSize = 9f
+                maxLines = 1
+                ellipsize = TextUtils.TruncateAt.END
+            }
+            texts.addView(name)
+            texts.addView(detail)
+            row.addView(
+                texts,
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                    marginStart = dp(8)
+                }
+            )
+
+            val badge = TextView(service).apply {
+                text = "启动"
+                textSize = 9f
+                typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+                setPadding(dp(8), dp(3), dp(8), dp(3))
+                background = rounded(0x1A22D3EE, 8f, 0x3322D3EE)
+                isClickable = true
+                setOnClickListener { toggleChannel(channel) }
+            }
+            row.addView(badge, LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { marginStart = dp(6) })
+
+            list.addView(
+                row,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+            )
+            rows[channel.id] = RowRef(dot, name, detail, badge)
         }
     }
 
-    private fun uptime(state: TunnelUiState): String {
-        if (state.startedAt <= 0L) return "00:00"
-        val total = ((System.currentTimeMillis() - state.startedAt) / 1000L).coerceAtLeast(0)
+    private fun toggleChannel(channel: ChannelState) {
+        when (channel.status) {
+            ChannelStatus.RUNNING, ChannelStatus.CONNECTING ->
+                TunnelService.stopOne(service, channel.id)
+
+            ChannelStatus.IDLE, ChannelStatus.ERROR ->
+                TunnelService.startOne(service, channel.id)
+        }
+    }
+
+    private fun uptime(channel: ChannelState): String {
+        if (channel.startedAt <= 0L) return "00:00"
+        val total = ((System.currentTimeMillis() - channel.startedAt) / 1000L).coerceAtLeast(0)
         val h = total / 3600
         val m = total % 3600 / 60
         val s = total % 60

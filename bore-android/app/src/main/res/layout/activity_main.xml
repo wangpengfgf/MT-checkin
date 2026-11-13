@@ -52,7 +52,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="TCP 内网穿透 · 集成 bore v0.6.0"
+                    android:text="多通道 TCP 内网穿透 · bore v0.6.0"
                     android:textColor="@color/text_muted"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -96,7 +96,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="monospace"
-                    android:text="00:00"
+                    android:text="0/0"
                     android:textColor="@color/text_muted"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -106,7 +106,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="7dp"
-                android:text="尚未启动 · 配置后点击下方按钮建立隧道"
+                android:text="添加通道后点击全部启动"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp" />
 
@@ -117,26 +117,28 @@
                 android:orientation="horizontal">
 
                 <TextView
-                    android:id="@+id/btnStart"
+                    android:id="@+id/btnStartAll"
                     style="@style/PrimaryButton"
                     android:layout_width="0dp"
+                    android:layout_height="48dp"
                     android:layout_weight="1"
-                    android:text="启动隧道" />
+                    android:text="全部启动" />
 
                 <Space
                     android:layout_width="10dp"
                     android:layout_height="1dp" />
 
                 <TextView
-                    android:id="@+id/btnStop"
+                    android:id="@+id/btnStopAll"
                     style="@style/DangerButton"
                     android:layout_width="0dp"
+                    android:layout_height="48dp"
                     android:layout_weight="1"
-                    android:text="停止" />
+                    android:text="全部停止" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Mode -->
+        <!-- Channels -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -145,215 +147,51 @@
             android:orientation="vertical"
             android:padding="18dp">
 
-            <TextView
-                style="@style/Label"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="0dp"
-                android:text="运行模式" />
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/bg_segment"
-                android:orientation="horizontal"
-                android:padding="4dp">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <TextView
-                    android:id="@+id/segLocal"
                     android:layout_width="0dp"
-                    android:layout_height="40dp"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="本地隧道 local"
-                    android:textColor="@color/text_secondary"
+                    android:letterSpacing="0.08"
+                    android:text="通道列表"
+                    android:textColor="@color/text_primary"
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/segServer"
-                    android:layout_width="0dp"
-                    android:layout_height="40dp"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="服务端 server"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp"
+                    android:id="@+id/btnAddChannel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_button_ghost"
+                    android:paddingStart="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="6dp"
+                    android:text="＋ 添加通道"
+                    android:textColor="@color/accent"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
             </LinearLayout>
-        </LinearLayout>
-
-        <!-- Config -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical"
-            android:padding="18dp">
 
             <TextView
-                style="@style/Label"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="0dp"
-                android:text="隧道配置" />
-
-            <!-- Local mode fields -->
-            <LinearLayout
-                android:id="@+id/groupLocal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <TextView
-                    style="@style/Label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="远程服务器地址 --to" />
-
-                <EditText
-                    android:id="@+id/etServer"
-                    style="@style/FieldEdit"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:hint="bore.pub"
-                    android:inputType="textUri" />
-
-                <TextView
-                    style="@style/Label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="本地端口 LOCAL_PORT" />
-
-                <EditText
-                    android:id="@+id/etLocalPort"
-                    style="@style/FieldEdit"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:hint="8080"
-                    android:inputType="number" />
-
-                <TextView
-                    style="@style/Label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="本地地址 --local-host" />
-
-                <EditText
-                    android:id="@+id/etLocalHost"
-                    style="@style/FieldEdit"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:hint="localhost"
-                    android:inputType="text" />
-
-                <TextView
-                    style="@style/Label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="远程端口 --port（留空由服务端分配）" />
-
-                <EditText
-                    android:id="@+id/etRemotePort"
-                    style="@style/FieldEdit"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:hint="可选，例如 50001"
-                    android:inputType="number" />
-            </LinearLayout>
-
-            <!-- Server mode fields -->
-            <LinearLayout
-                android:id="@+id/groupServer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone">
-
-                <TextView
-                    style="@style/Label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="监听地址 --bind-addr" />
-
-                <EditText
-                    android:id="@+id/etBindAddr"
-                    style="@style/FieldEdit"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:hint="0.0.0.0"
-                    android:inputType="text" />
-
-                <TextView
-                    style="@style/Label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="最小端口 --min-port" />
-
-                <EditText
-                    android:id="@+id/etMinPort"
-                    style="@style/FieldEdit"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:hint="1024"
-                    android:inputType="number" />
-
-                <TextView
-                    style="@style/Label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="最大端口 --max-port" />
-
-                <EditText
-                    android:id="@+id/etMaxPort"
-                    style="@style/FieldEdit"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:hint="65535"
-                    android:inputType="number" />
-
-                <TextView
-                    style="@style/Label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="隧道监听地址 --bind-tunnels（可选）" />
-
-                <EditText
-                    android:id="@+id/etBindTunnels"
-                    style="@style/FieldEdit"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:hint="默认同 --bind-addr"
-                    android:inputType="text" />
-            </LinearLayout>
-
-            <TextView
-                style="@style/Label"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="密钥 --secret（可选，需与服务端一致）" />
-
-            <EditText
-                android:id="@+id/etSecret"
-                style="@style/FieldEdit"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                android:hint="留空表示不鉴权"
-                android:inputType="textPassword" />
-
-            <TextView
-                android:id="@+id/tvCmd"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:background="@drawable/bg_log"
-                android:fontFamily="monospace"
-                android:padding="12dp"
-                android:text="bore local 8080 --to bore.pub"
+                android:layout_marginTop="8dp"
+                android:text="每个通道对应一个独立 bore 进程，可同时转发多个本地服务"
                 android:textColor="@color/text_muted"
                 android:textSize="10sp" />
+
+            <LinearLayout
+                android:id="@+id/llChannels"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="vertical" />
         </LinearLayout>
 
         <!-- Keep alive -->
@@ -388,42 +226,6 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="断线自动重连"
-                        android:textColor="@color/text_primary"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="进程退出后自动拉起，指数退避"
-                        android:textColor="@color/text_muted"
-                        android:textSize="11sp" />
-                </LinearLayout>
-
-                <Switch
-                    android:id="@+id/switchAutoRestart"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
                         android:text="悬浮窗守护"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp" />
@@ -432,7 +234,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="任意界面拖动查看状态并启停隧道"
+                        android:text="任意界面查看各通道状态并单独启停"
                         android:textColor="@color/text_muted"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -447,8 +249,17 @@
                 android:id="@+id/btnBattery"
                 style="@style/GhostButton"
                 android:layout_width="match_parent"
+                android:layout_height="44dp"
                 android:layout_marginTop="14dp"
                 android:text="加入电池优化白名单" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="各通道断线后按指数退避自动重连，网络恢复立即重连"
+                android:textColor="@color/text_muted"
+                android:textSize="10sp" />
         </LinearLayout>
 
         <!-- Logs -->
@@ -512,7 +323,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:gravity="center"
-            android:text="内置 bore v0.6.0 (arm64) · 前台服务 + 悬浮窗保活"
+            android:text="内置 bore v0.6.0 (arm64) · 多进程多通道 · 前台服务保活"
             android:textColor="@color/text_muted"
             android:textSize="10sp" />
     </LinearLayout>
