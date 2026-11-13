@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bore 隧道 · Android 版下载</title>
+<meta name="description" content="集成 bore v0.6.0 的 Android 多通道内网穿透客户端，支持悬浮窗守护与断线自动重连。" />
+<style>
+  :root {
+    --bg: #05080c;
+    --surface: #0b1118;
+    --surface-2: #0f1720;
+    --stroke: #1c2a36;
+    --text: #e8f2f7;
+    --muted: #8296a5;
+    --cyan: #22d3ee;
+    --blue: #3b82f6;
+    --green: #34d399;
+    --amber: #fbbf24;
+    --radius: 20px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    line-height: 1.65;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection { background: rgba(34, 211, 238, 0.28); }
+
+  .bg-decor {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background:
+      radial-gradient(900px 520px at 82% -8%, rgba(34, 211, 238, 0.14), transparent 60%),
+      radial-gradient(760px 460px at 4% 12%, rgba(59, 130, 246, 0.13), transparent 62%),
+      radial-gradient(700px 600px at 50% 110%, rgba(16, 185, 129, 0.08), transparent 65%),
+      var(--bg);
+  }
+
+  .bg-grid {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+    background-size: 52px 52px;
+    mask-image: radial-gradient(circle at 50% 20%, rgba(0,0,0,.85), transparent 78%);
+    -webkit-mask-image: radial-gradient(circle at 50% 20%, rgba(0,0,0,.85), transparent 78%);
+    pointer-events: none;
+  }
+
+  .wrap {
+    width: min(1080px, calc(100% - 40px));
+    margin: 0 auto;
+  }
+
+  /* ---------------- nav ---------------- */
+  nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 22px 0 8px;
+  }
+
+  .logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 20px;
+    color: #041218;
+    background: linear-gradient(135deg, var(--cyan), var(--blue));
+    box-shadow: 0 8px 30px rgba(34, 211, 238, 0.28);
+    flex: none;
+  }
+
+  .brand-name {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+  }
+
+  .brand-sub {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  .nav-spacer { flex: 1; }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(34, 211, 238, 0.3);
+    color: var(--cyan);
+    background: rgba(34, 211, 238, 0.07);
+    white-space: nowrap;
+  }
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 10px rgba(52, 211, 153, 0.9);
+    animation: blink 2s infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  /* ---------------- hero ---------------- */
+  .hero {
+    display: grid;
+    grid-template-columns: 1.08fr 0.92fr;
+    align-items: center;
+    gap: 48px;
+    padding: 54px 0 34px;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: var(--cyan);
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 26px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--cyan), transparent);
+  }
+
+  h1 {
+    font-size: clamp(32px, 5vw, 50px);
+    line-height: 1.14;
+    letter-spacing: -0.02em;
+    font-weight: 800;
+  }
+
+  .grad-text {
+    background: linear-gradient(100deg, #67e8f9 0%, #60a5fa 55%, #a5b4fc 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .lead {
+    margin-top: 18px;
+    font-size: 15px;
+    color: var(--muted);
+    max-width: 480px;
+  }
+
+  .lead strong { color: var(--text); font-weight: 600; }
+
+  .cta-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+
+  .btn-download {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    padding: 15px 28px;
+    border-radius: 15px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #041218;
+    text-decoration: none;
+    background: linear-gradient(100deg, #22d3ee, #3b82f6);
+    box-shadow: 0 12px 38px rgba(34, 211, 238, 0.32);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .btn-download:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 46px rgba(34, 211, 238, 0.45);
+  }
+
+  .btn-download svg { flex: none; }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 18px;
+    border-radius: 14px;
+    color: var(--muted);
+    border: 1px solid var(--stroke);
+    background: rgba(15, 23, 32, 0.7);
+    font-size: 12.5px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.18s, border-color 0.18s;
+  }
+
+  .btn-secondary:hover { color: var(--text); border-color: #2c4354; }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+  }
+
+  .meta-chip {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    border: 1px solid var(--stroke);
+    background: rgba(11, 17, 24, 0.8);
+    border-radius: 8px;
+    padding: 5px 9px;
+  }
+
+  /* ---------------- phone mock ---------------- */
+  .phone-wrap {
+    display: flex;
+    justify-content: center;
+    position: relative;
+  }
+
+  .phone {
+    width: 296px;
+    border-radius: 38px;
+    padding: 11px;
+    background: linear-gradient(160deg, #1b2833, #0a1017 65%);
+    border: 1px solid #24333f;
+    box-shadow:
+      0 40px 90px rgba(0, 0, 0, 0.65),
+      0 0 0 1px rgba(255, 255, 255, 0.02) inset,
+      0 0 90px rgba(34, 211, 238, 0.1);
+    position: relative;
+  }
+
+  .phone::before {
+    content: "";
+    position: absolute;
+    top: 11px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 92px;
+    height: 20px;
+    border-radius: 0 0 12px 12px;
+    background: #05080c;
+    z-index: 2;
+  }
+
+  .screen {
+    border-radius: 29px;
+    background: linear-gradient(180deg, #070c11, #05090d);
+    padding: 30px 13px 14px;
+    min-height: 470px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .scr-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 4px 12px;
+  }
+
+  .scr-logo {
+    width: 27px;
+    height: 27px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 13px;
+    font-weight: 800;
+    color: #041218;
+    background: linear-gradient(135deg, var(--cyan), var(--blue));
+  }
+
+  .scr-title { font-size: 10.5px; font-weight: 800; letter-spacing: 0.1em; }
+  .scr-caption { font-size: 8px; color: var(--muted); }
+
+  .card {
+    border: 1px solid #1a2833;
+    background: linear-gradient(145deg, #0d151d, #0a1016);
+    border-radius: 15px;
+    padding: 12px;
+  }
+
+  .status-card { border-color: rgba(34, 211, 238, 0.25); }
+
+  .status-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.9);
+  }
+
+  .status-count {
+    margin-left: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 9px;
+    color: var(--muted);
+  }
+
+  .url-line {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 8.5px;
+    color: #7fc8dd;
+    margin-top: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chan-block { margin-top: 9px; }
+
+  .chan-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 2px;
+  }
+
+  .chan-row + .chan-row { border-top: 1px solid #131f29; }
+
+  .chan-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex: none;
+  }
+
+  .chan-dot.on { background: var(--green); box-shadow: 0 0 7px rgba(52, 211, 153, 0.8); }
+  .chan-dot.wait { background: var(--amber); box-shadow: 0 0 7px rgba(251, 191, 36, 0.7); }
+  .chan-dot.off { background: #55646f; }
+
+  .chan-text { min-width: 0; flex: 1; }
+  .chan-name { font-size: 9.5px; font-weight: 700; }
+  .chan-sub {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 7.5px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chan-badge {
+    font-size: 7.5px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 6px;
+    border: 1px solid rgba(34, 211, 238, 0.4);
+    color: var(--cyan);
+    flex: none;
+  }
+
+  .log-box {
+    margin-top: 9px;
+    border: 1px solid #16232d;
+    background: #04080b;
+    border-radius: 10px;
+    padding: 8px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 7px;
+    line-height: 1.7;
+    color: #6f8b9c;
+    white-space: pre-line;
+  }
+
+  .log-ok { color: #4ade80; }
+
+  .float-pill {
+    position: absolute;
+    top: 300px;
+    right: -30px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: rgba(9, 15, 21, 0.94);
+    border: 1px solid rgba(34, 211, 238, 0.38);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    font-size: 8.5px;
+    font-weight: 700;
+    backdrop-filter: blur(8px);
+    animation: floaty 4.5s ease-in-out infinite;
+  }
+
+  @keyframes floaty {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-9px); }
+  }
+
+  /* ---------------- sections ---------------- */
+  section { padding: 44px 0 6px; }
+
+  .sec-head { margin-bottom: 24px; }
+
+  .sec-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    color: var(--cyan);
+    text-transform: uppercase;
+  }
+
+  .sec-title {
+    margin-top: 8px;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  .sec-desc {
+    margin-top: 7px;
+    font-size: 13px;
+    color: var(--muted);
+    max-width: 620px;
+  }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+
+  .feature {
+    background: linear-gradient(155deg, rgba(15, 23, 32, 0.92), rgba(9, 14, 20, 0.92));
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .feature:hover {
+    border-color: rgba(34, 211, 238, 0.34);
+    transform: translateY(-2px);
+  }
+
+  .feature-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    display: grid;
+    place-items: center;
+    background: rgba(34, 211, 238, 0.09);
+    border: 1px solid rgba(34, 211, 238, 0.24);
+    color: var(--cyan);
+    margin-bottom: 13px;
+  }
+
+  .feature h3 { font-size: 14px; font-weight: 700; margin-bottom: 5px; }
+  .feature p { font-size: 12px; color: var(--muted); line-height: 1.7; }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    counter-reset: step;
+  }
+
+  .step {
+    position: relative;
+    border: 1px solid var(--stroke);
+    background: rgba(11, 17, 24, 0.7);
+    border-radius: var(--radius);
+    padding: 20px 18px;
+  }
+
+  .step::before {
+    counter-increment: step;
+    content: "0" counter(step);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--cyan);
+    opacity: 0.85;
+  }
+
+  .step h4 { margin-top: 10px; font-size: 13px; }
+  .step p { margin-top: 4px; font-size: 11.5px; color: var(--muted); }
+
+  .sha-card {
+    margin-top: 18px;
+    border: 1px dashed #24343f;
+    background: rgba(9, 14, 20, 0.75);
+    border-radius: 15px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .sha-label {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    color: var(--muted);
+    flex: none;
+  }
+
+  .sha-value {
+    flex: 1;
+    min-width: 200px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10.5px;
+    color: #9fb6c6;
+    word-break: break-all;
+  }
+
+  .copy-btn {
+    flex: none;
+    border: 1px solid rgba(34, 211, 238, 0.35);
+    color: var(--cyan);
+    background: rgba(34, 211, 238, 0.07);
+    border-radius: 8px;
+    padding: 6px 11px;
+    font-size: 10.5px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .note {
+    margin-top: 22px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .note-item {
+    border-left: 2px solid rgba(251, 191, 36, 0.55);
+    background: rgba(251, 191, 36, 0.045);
+    border-radius: 0 12px 12px 0;
+    padding: 12px 16px;
+    font-size: 11.5px;
+    color: #b9a882;
+  }
+
+  footer {
+    margin-top: 52px;
+    border-top: 1px solid #121c24;
+    padding: 24px 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 11px;
+    color: #5f7180;
+  }
+
+  .footer-links { display: flex; gap: 16px; flex-wrap: wrap; }
+  .footer-links a { color: #7c93a4; text-decoration: none; }
+  .footer-links a:hover { color: var(--cyan); }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 34px;
+    transform: translate(-50%, 20px);
+    background: #0e1b24;
+    border: 1px solid rgba(34, 211, 238, 0.4);
+    color: var(--cyan);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 10px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    z-index: 50;
+  }
+
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* ---------------- responsive ---------------- */
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; gap: 36px; padding-top: 34px; }
+    .phone-wrap { order: -1; }
+    .lead { max-width: 100%; }
+    .features { grid-template-columns: 1fr 1fr; }
+    .steps { grid-template-columns: 1fr 1fr; }
+    .float-pill { right: 4px; }
+  }
+
+  @media (max-width: 560px) {
+    .wrap { width: calc(100% - 28px); }
+    .nav-sub { display: none; }
+    .features, .steps, .note { grid-template-columns: 1fr; }
+    .phone { width: 272px; }
+    .float-pill { right: -6px; font-size: 8px; }
+    .cta-row { gap: 10px; }
+    .btn-download { width: 100%; justify-content: center; }
+    .btn-secondary { width: 100%; justify-content: center; }
+    footer { flex-direction: column; align-items: flex-start; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-decor"></div>
+<div class="bg-grid"></div>
+
+<div class="wrap">
+  <nav>
+    <div class="logo">B</div>
+    <div>
+      <div class="brand-name">BORE TUNNEL</div>
+      <div class="brand-sub">Android · 多通道内网穿透客户端</div>
+    </div>
+    <div class="nav-spacer"></div>
+    <span class="pill"><span class="dot"></span>v1.1 · 稳定版</span>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <div class="eyebrow">TCP TUNNEL · BORE v0.6.0</div>
+      <h1>把本地服务<br /><span class="grad-text">装进手机，随时可用</span></h1>
+      <p class="lead">
+        基于 <strong>bore</strong> 的 Android 封装客户端。一个应用管理多条隧道，
+        每个通道独立进程、独立公网地址；配合<strong>前台服务</strong>与
+        <strong>可拖动悬浮窗</strong>，锁屏、切换应用也能持续在线。
+      </p>
+
+      <div class="cta-row">
+        <a class="btn-download" href="BoreTunnel-arm64-v1.1.apk" download>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M4 19h16" />
+          </svg>
+          下载 APK · 2.1 MB
+        </a>
+        <a class="btn-secondary" href="BoreTunnel-arm64-v1.0.apk" download>旧版 v1.0</a>
+      </div>
+
+      <div class="meta-row">
+        <span class="meta-chip">Android 8.0+</span>
+        <span class="meta-chip">arm64-v8a</span>
+        <span class="meta-chip">已签名 · 调试证书</span>
+        <span class="meta-chip">无需 Root</span>
+      </div>
+
+      <div class="sha-card">
+        <span class="sha-label">SHA-256</span>
+        <span class="sha-value" id="sha">0ba31a3a359c47f8bfc72c0cb3e9fe2a4ed884e85e9fc5e61941f6a5d84ea14f</span>
+        <button class="copy-btn" id="copyBtn" type="button">复制</button>
+      </div>
+    </div>
+
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="screen">
+          <div class="scr-head">
+            <div class="scr-logo">B</div>
+            <div>
+              <div class="scr-title">BORE TUNNEL</div>
+              <div class="scr-caption">多通道 TCP 内网穿透</div>
+            </div>
+          </div>
+
+          <div class="card status-card">
+            <div class="status-line">
+              <span class="status-dot"></span>
+              在线 3 / 3 个通道
+              <span class="status-count">3/3</span>
+            </div>
+            <div class="url-line">bore.pub:51201 · bore.pub:51202 · bore.pub:51203</div>
+            <div class="url-line" style="color:#5f7a8a;margin-top:4px;">共 3 个通道 · 可同时转发多个本地服务</div>
+          </div>
+
+          <div class="card chan-block">
+            <div class="chan-row">
+              <span class="chan-dot on"></span>
+              <div class="chan-text">
+                <div class="chan-name">Web 管理台</div>
+                <div class="chan-sub">localhost:8080 → bore.pub:51201</div>
+              </div>
+              <span class="chan-badge">停止</span>
+            </div>
+            <div class="chan-row">
+              <span class="chan-dot on"></span>
+              <div class="chan-text">
+                <div class="chan-name">API 服务</div>
+                <div class="chan-sub">localhost:9090 → bore.pub:51202</div>
+              </div>
+              <span class="chan-badge">停止</span>
+            </div>
+            <div class="chan-row">
+              <span class="chan-dot wait"></span>
+              <div class="chan-text">
+                <div class="chan-name">数据库代理</div>
+                <div class="chan-sub">127.0.0.1:3306 → 正在重连…</div>
+              </div>
+              <span class="chan-badge">取消</span>
+            </div>
+          </div>
+
+          <div class="log-box">[Web 管理台] listening at bore.pub:51201
+[API 服务] <span class="log-ok">listening at bore.pub:51202</span>
+[数据库代理] ✖ 进程退出，3s 后自动重连</div>
+        </div>
+      </div>
+
+      <div class="float-pill"><span class="status-dot"></span>BORE · 3/3 在线</div>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head">
+      <div class="sec-label">Features</div>
+      <h2 class="sec-title">为“长期在线”而设计</h2>
+      <p class="sec-desc">不只是把 bore 打包进 APK，而是补齐移动端后台运行、权限与多通道管理。</p>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10"/><path d="m11 4 3 3-3 3"/><path d="M20 17H10"/><path d="m13 14-3 3 3 3"/></svg>
+        </div>
+        <h3>多通道并发</h3>
+        <p>每条通道对应一个独立 bore 进程，多个本地端口同时映射，互不干扰、独立重连。</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 18v3"/></svg>
+        </div>
+        <h3>悬浮窗守护</h3>
+        <p>可拖动状态胶囊与通道面板，任意界面查看公网地址并单独启停，不必切回应用。</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 12a8 8 0 1 0-2.3 5.7"/><path d="M20 5v7h-7"/></svg>
+        </div>
+        <h3>断线自动重连</h3>
+        <p>进程退出后按 3→30 秒指数退避自动拉起；网络恢复时立即重连，无需手动干预。</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l7 3v6c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <h3>前台服务保活</h3>
+        <p>Foreground Service + WakeLock + WifiLock + 电池白名单引导，降低息屏被系统回收的概率。</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M7 13h6"/><path d="M7 16h4"/></svg>
+        </div>
+        <h3>完整命令能力</h3>
+        <p>local / server 双模式，secret、local-host、远程端口、min/max port、bind-addr 等参数齐全。</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h16v14H4z"/><path d="m7 9 3 3-3 3"/><path d="M13 15h4"/></svg>
+        </div>
+        <h3>实时日志</h3>
+        <p>统一日志面板按通道名标注输出，错误、连接、隧道地址一目了然，便于排查。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="sec-label">Getting started</div>
+      <h2 class="sec-title">四步开始使用</h2>
+      <p class="sec-desc">首次启动需要授予必要权限；通道参数与本机运行的服务保持一致。</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <h4>下载并安装</h4>
+        <p>允许文件管理器或浏览器安装未知来源应用，安装完成后打开「Bore 隧道」。</p>
+      </div>
+      <div class="step">
+        <h4>授予权限</h4>
+        <p>允许通知、悬浮窗，并点击「加入电池优化白名单」，保证后台稳定运行。</p>
+      </div>
+      <div class="step">
+        <h4>添加通道</h4>
+        <p>为每个本地服务新增通道：填写本地端口、服务器地址，远程端口可留空自动分配。</p>
+      </div>
+      <div class="step">
+        <h4>全部启动</h4>
+        <p>点击「全部启动」，在通道行、通知栏或悬浮窗中查看生成的公网地址。</p>
+      </div>
+    </div>
+
+    <div class="note">
+      <div class="note-item">仅提供 arm64-v8a 版本，内置的可执行文件为 aarch64 架构；部分定制系统可能限制从应用目录执行程序。</div>
+      <div class="note-item">APK 使用 Android 调试证书签名，适合自用与内测分发；如需上架应用商店，请使用正式签名重新打包。</div>
+    </div>
+  </section>
+
+  <footer>
+    <div>Bore Tunnel Android · 集成 bore v0.6.0 · 仅用于合法的远程访问与调试</div>
+    <div class="footer-links">
+      <a href="BoreTunnel-arm64-v1.1.apk">下载 APK</a>
+      <a href="#top">回到顶部</a>
+    </div>
+  </footer>
+</div>
+
+<div class="toast" id="toast">SHA-256 已复制</div>
+
+<script>
+  (function () {
+    const btn = document.getElementById("copyBtn");
+    const sha = document.getElementById("sha");
+    const toast = document.getElementById("toast");
+
+    function showToast(text) {
+      toast.textContent = text;
+      toast.classList.add("show");
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => toast.classList.remove("show"), 1600);
+    }
+
+    function fallbackCopy(text) {
+      const area = document.createElement("textarea");
+      area.value = text;
+      area.style.position = "fixed";
+      area.style.opacity = "0";
+      document.body.appendChild(area);
+      area.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(area);
+    }
+
+    btn.addEventListener("click", function () {
+      const text = sha.textContent.trim();
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(
+          () => showToast("SHA-256 已复制"),
+          () => { fallbackCopy(text); showToast("SHA-256 已复制"); }
+        );
+      } else {
+        fallbackCopy(text);
+        showToast("SHA-256 已复制");
+      }
+    });
+  })();
+</script>
+</body>
+</html>
