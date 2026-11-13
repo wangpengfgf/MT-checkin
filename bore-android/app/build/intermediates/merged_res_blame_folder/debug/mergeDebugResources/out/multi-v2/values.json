@@ -1,0 +1,62 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.bore.tunnel.app-mergeDebugResources-2:/values/values.xml",
+            "map": [
+                {
+                    "source": "/workspace/bore-android/app/src/main/res/values/strings.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "44",
+                        "endOffsets": "95"
+                    },
+                    "to": {
+                        "startLines": "15",
+                        "startColumns": "4",
+                        "startOffsets": "623",
+                        "endColumns": "44",
+                        "endOffsets": "663"
+                    }
+                },
+                {
+                    "source": "/workspace/bore-android/app/src/main/res/values/themes.xml",
+                    "from": {
+                        "startLines": "2,45,21,55,13,35",
+                        "startColumns": "4,4,4,4,4,4",
+                        "startOffsets": "55,2107,984,2547,667,1670",
+                        "endLines": "11,53,33,62,19,43",
+                        "endColumns": "12,12,12,12,12,12",
+                        "endOffsets": "661,2541,1664,2937,978,2101"
+                    },
+                    "to": {
+                        "startLines": "16,26,35,48,56,63",
+                        "startColumns": "4,4,4,4,4,4",
+                        "startOffsets": "668,1279,1718,2403,2798,3114",
+                        "endLines": "25,34,47,55,62,71",
+                        "endColumns": "12,12,12,12,12,12",
+                        "endOffsets": "1274,1713,2398,2793,3109,3545"
+                    }
+                },
+                {
+                    "source": "/workspace/bore-android/app/src/main/res/values/colors.xml",
+                    "from": {
+                        "startLines": "9,10,2,13,14,11,5,3,4,8,6,7,12",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "363,404,55,526,566,450,181,92,134,318,222,269,487",
+                        "endColumns": "40,45,36,39,56,36,40,41,46,44,46,48,38",
+                        "endOffsets": "399,445,87,561,618,482,217,129,176,358,264,313,521"
+                    },
+                    "to": {
+                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,96,142,179,219,276,313,354,396,443,488,535,584",
+                        "endColumns": "40,45,36,39,56,36,40,41,46,44,46,48,38",
+                        "endOffsets": "91,137,174,214,271,308,349,391,438,483,530,579,618"
+                    }
+                }
+            ]
+        }
+    ]
+}

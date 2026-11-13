@@ -1,0 +1,7 @@
+com.bore.tunnel.app-pngs-0 /workspace/bore-android/app/build/generated/res/pngs/debug
+com.bore.tunnel.app-resValues-1 /workspace/bore-android/app/build/generated/res/resValues/debug
+com.bore.tunnel.app-packageDebugResources-2 /workspace/bore-android/app/build/intermediates/incremental/debug/packageDebugResources/merged.dir
+com.bore.tunnel.app-packageDebugResources-3 /workspace/bore-android/app/build/intermediates/incremental/debug/packageDebugResources/stripped.dir
+com.bore.tunnel.app-debug-4 /workspace/bore-android/app/build/intermediates/merged_res/debug/mergeDebugResources
+com.bore.tunnel.app-debug-5 /workspace/bore-android/app/src/debug/res
+com.bore.tunnel.app-main-6 /workspace/bore-android/app/src/main/res
